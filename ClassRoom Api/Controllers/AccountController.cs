@@ -1,5 +1,6 @@
 ﻿using ClassRoom_Api.Entities;
 using ClassRoom_Api.Models;
+using ClassRoom_Api.Services;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -15,13 +16,16 @@ public class AccountController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
+    private ILogger _logger;
 
     public AccountController(
         UserManager<User> userManager,
-        SignInManager<User> signInManager)
+        SignInManager<User> signInManager,
+        ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _logger = logger;
     }
 
     [HttpPost("signup")]
@@ -41,7 +45,11 @@ public class AccountController : ControllerBase
 
         await _userManager.CreateAsync(user, createUserDto.Password);
 
+        _logger.LogInformation("User saved to database with id {0}", user.Id);
+
         await _signInManager.SignInAsync(user, isPersistent: true);
+
+        _logger.LogInformation("User registered");
 
         return Ok();
     }
@@ -66,6 +74,7 @@ public class AccountController : ControllerBase
 
     [HttpGet("{username}")]
     [Authorize]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Profile(string username)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -73,10 +82,18 @@ public class AccountController : ControllerBase
         if (user.UserName != username)
             return NotFound();
 
-        var userDto = user.Adapt<UserDto>();
         //we are here mapping User(all info that is related to him) to userDto  =>
         //to return the user particular info not all of it;
+        var userDto = user.Adapt<UserDto>();
+
+        _logger.LogInformation("User profile with id {0}", user.Id);
 
         return Ok(userDto);
+    }
+
+    [HttpGet("localize")]
+    public IActionResult GetStrign([FromServices] LocalizerService localizerService)
+    {
+        return Ok(localizerService["Required"]);
     }
 }

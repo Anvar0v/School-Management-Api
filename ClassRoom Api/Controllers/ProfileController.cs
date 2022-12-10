@@ -26,6 +26,7 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet("courses")]
+    [ProducesResponseType(typeof(List<CourseDto>),StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCourses()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -36,6 +37,7 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet("courses/{courseId}/tasks")]
+    [ProducesResponseType(typeof(List<UserTaskResultDto>),StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserTasks(Guid courseId)
     {
         var user = await _userManager.GetUserAsync(User);
